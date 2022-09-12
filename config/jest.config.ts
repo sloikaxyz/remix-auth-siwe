@@ -15,6 +15,7 @@ const config: Config.InitialOptions = {
       { configFile: "./config/jest/babel.config.js" },
     ],
   },
+  testEnvironment: "node",
 };
 
 export default config;
