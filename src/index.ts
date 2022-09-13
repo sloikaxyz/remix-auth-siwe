@@ -59,39 +59,20 @@ export class SiweStrategy<User> extends AbstractStrategy<User, VerifierFn> {
     options: AuthenticateOptions
   ): Promise<User> {
     const formData = await request.formData();
-    if (!isRecord(formData)) {
-      return await this.failure(
-        "request formData is not an object",
-        request,
-        sessionStorage,
-        options
-      );
-    }
 
     const message = formData.get("message");
     if (typeof message !== "string") {
-      return await this.failure(
-        'request formData "message" is not a string',
-        request,
-        sessionStorage,
-        options
-      );
+      throw new Error(`request formData "message" is not a string`);
     }
     const signature = formData.get("signature");
     if (typeof signature !== "string") {
-      return await this.failure(
-        'request formData "signature" is not a string',
-        request,
-        sessionStorage,
-        options
-      );
+      throw new Error(`request formData "signature" is not a string`);
     }
 
     let siweMessage: SiweMessage;
     try {
       siweMessage = new SiweMessage(message);
     } catch (err) {
-      console.error("siweMessage error", err);
       // SiweMessage constructor throws a SiweError an object-type message is invalid
       // https://github.com/spruceid/siwe/blob/23f7e17163ea15456b4afed3c28fb091b39feee3/packages/siwe/lib/client.ts#L352
       if (err instanceof SiweError) {
@@ -103,19 +84,11 @@ export class SiweStrategy<User> extends AbstractStrategy<User, VerifierFn> {
       // the string message is parsed using the grammar defined in here:
       // https://github.com/spruceid/siwe/blob/23f7e17163ea15456b4afed3c28fb091b39feee3/packages/siwe-parser/lib/abnf.ts#L23)
       if (err instanceof Error) {
-        return await this.failure(
-          err.message,
-          request,
-          sessionStorage,
-          options
-        );
+        throw new Error(err.message);
       }
 
-      return await this.failure(
-        `SiweMessage constructor threw an unexpected error: ${String(err)}`,
-        request,
-        sessionStorage,
-        options
+      throw new Error(
+        `SiweMessage constructor threw an unexpected error: ${String(err)}`
       );
     }
     let user = {} as User;
@@ -153,32 +126,17 @@ export class SiweStrategy<User> extends AbstractStrategy<User, VerifierFn> {
         const { data } = siweResponse;
 
         user = await this.verify({ message: data });
-        console.log("siwe verify user:", user);
-        // return user;
       })
       .catch(async (err: unknown) => {
-        console.log("siwe verify error:", err);
         if (err instanceof Error) {
-          return await this.failure(
-            err.message,
-            request,
-            sessionStorage,
-            options
-          );
+          throw new Error(err.message);
         }
 
         if (typeof err === "string") {
-          return await this.failure(err, request, sessionStorage, options);
+          throw new Error(err);
         }
 
-        return this.failure(
-          `SiweMessage.verify rejected the promise with an unknown error: ${String(
-            err
-          )}`,
-          request,
-          sessionStorage,
-          options
-        );
+        throw err;
       });
 
     return this.success(user, request, sessionStorage, options);
