@@ -1,13 +1,17 @@
-import { ethers } from "ethers";
 import { SessionStorage } from "@remix-run/server-runtime";
+import { ethers } from "ethers";
 import {
   AuthenticateOptions,
   Strategy as AbstractStrategy,
   StrategyVerifyCallback,
 } from "remix-auth";
 import { SiweError, SiweMessage } from "siwe";
+import { VerifyOpts } from "siwe/dist/types";
 
-import { StrategyOptions, VerifierCallbackFn } from "./types";
+export interface StrategyOptions {
+  domain: string;
+  provider?: VerifyOpts["provider"];
+}
 
 type VerifierFn = {
   message: SiweMessage;
