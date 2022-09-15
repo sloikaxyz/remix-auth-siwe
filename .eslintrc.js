@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/prefer-module */
 module.exports = {
   root: true,
   plugins: ["@typescript-eslint/eslint-plugin", "import"],
@@ -17,7 +16,7 @@ module.exports = {
       parser: "@typescript-eslint/parser",
       parserOptions: {
         project: "tsconfig.json",
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: "./",
       },
 
       plugins: ["@typescript-eslint/eslint-plugin", "import"],

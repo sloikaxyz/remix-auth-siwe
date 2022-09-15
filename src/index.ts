@@ -2,7 +2,7 @@ import { SessionStorage } from "@remix-run/server-runtime";
 import { ethers } from "ethers";
 import {
   AuthenticateOptions,
-  Strategy as AbstractStrategy,
+  Strategy,
   StrategyVerifyCallback,
 } from "remix-auth";
 import { SiweError, SiweMessage } from "siwe";
@@ -33,11 +33,11 @@ function isStrategyOptions(value: unknown): value is StrategyOptions {
   );
 }
 
-export class SiweStrategy<User> extends AbstractStrategy<User, VerifierFn> {
+export class SiweStrategy<User> extends Strategy<User, VerifierFn> {
   name = "siwe";
 
   private options: StrategyOptions;
-  verify: StrategyVerifyCallback<User, VerifierFn>;
+  protected verify: StrategyVerifyCallback<User, VerifierFn>;
 
   constructor(
     options: StrategyOptions,
