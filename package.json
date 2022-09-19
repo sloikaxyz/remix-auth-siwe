@@ -34,7 +34,9 @@
     "README.md"
   ],
   "peerDependencies": {
-    "@remix-run/server-runtime": "^1.0.0"
+    "@remix-run/server-runtime": "^1.0.0",
+    "ethers": ">= 5.6.8 <6.0.0",
+    "siwe": "^2.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.14.2",
@@ -56,18 +58,18 @@
     "eslint-plugin-jest-dom": "^3.9.0",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-unicorn": "^32.0.1",
+    "ethers": ">= 5.6.8 <6.0.0",
     "jest": "^26.6.3",
     "jest-fetch-mock": "^3.0.3",
     "prettier": "^2.3.2",
     "react": "^17.0.2",
+    "siwe": "^2.0.5",
     "ts-node": "^10.8.1",
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "ethers": "^5.7.0",
     "express": "^4.18.1",
     "keccak": "^3.0.2",
-    "remix-auth": "^3.0.0",
-    "siwe": "^2.0.5"
+    "remix-auth": "^3.0.0"
   }
 }
