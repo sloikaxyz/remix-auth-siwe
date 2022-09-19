@@ -45,7 +45,7 @@ Set up the authenticator:
 
 ```
 
-To authenticate a user:
+Create an action to authenticate user:
 
 ```
    export const action: ActionFunction = async ({ request, context }) => {
@@ -58,9 +58,53 @@ To authenticate a user:
 
 ```
 
-## Scripts
+From your login entry point send `message` and `signature` as formData:
 
-- `build`: Build the project for production using the TypeScript compiler (strips the types).
-- `typecheck`: Check the project for type errors, this also happens in build but it's useful to do in development.
-- `lint`: Runs ESLint against the source codebase to ensure it pass the linting rules.
-- `test`: Runs all the test using Jest.
+```
+   import { useSubmit } from '@remix-run/react';
+   import { SiweMessage } from 'siwe';
+
+
+   export default function Screen() {
+      const submit = useSubmit();
+
+      function authenticate = useCallback(() => {
+         // create siwe message
+         const message = await new SiweMessage({ siweMessageOptions });
+         // sign siwe message
+         const signature = await signer.signMessage(message);
+
+         const formData = new FormData();
+         formData.append('message', message);
+         formData.append('signature', signature);
+         submit(formData, {
+            action: {YOUR_LOGIN_ACTION},
+            method: 'post',
+            replace: true,
+         });
+      }, [submit])
+
+      return <button onClick={authenticate}>Sign In</button>;
+   }
+```
+
+You can check if the user is authenticated with `authenticator.isAuthenticated` and redirect to the dashboard if it is, or to login if it's not
+
+```
+export let loader: LoaderFunction = async ({ request }) => {
+  // If the user is already authenticated redirect to /dashboard
+  // otherwise redirect to /login
+  return await authenticator.isAuthenticated(request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/login",
+  });
+};
+```
+
+You can get user object from `authenticator.isAuthenticated`:
+
+```
+   let user = await authenticator.isAuthenticated(request, {
+      failureRedirect: "/login",
+   });
+```
