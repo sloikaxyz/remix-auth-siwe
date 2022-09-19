@@ -56,12 +56,10 @@ describe("SiweStrategy", () => {
         ...DEFAULT_STRATEGY_OPTIONS,
         provider: null,
       };
-
-      expect(
-        () =>
-          // @ts-expect-error -- provider type incompatible
-          new SiweStrategy(options, verify)
-      ).toThrow(/invalid options object/);
+      // @ts-expect-error -- a verify function is required
+      expect(() => new SiweStrategy(options, verify)).toThrow(
+        /invalid options object/
+      );
     });
   });
 
@@ -124,7 +122,7 @@ describe("SiweStrategy", () => {
       });
     });
     describe("signature validation", () => {
-      it("should fail if message is invalid", async () => {
+      it("should return 401 response if message is invalid", async () => {
         const body = new FormData();
         body.append("message", invalidMessage);
         body.append("signature", signature);
@@ -134,6 +132,10 @@ describe("SiweStrategy", () => {
           new SiweMessage(invalidMessage);
         } catch (error) {
           invalidMessageError = error;
+        }
+
+        if (!(invalidMessageError instanceof Error)) {
+          throw new Error();
         }
 
         const request = new Request(DEFAULT_URI, {
@@ -146,7 +148,10 @@ describe("SiweStrategy", () => {
             sessionKey: "user",
           });
         } catch (error) {
-          expect(error).toEqual(invalidMessageError);
+          if (!(error instanceof Response)) throw error;
+          const body = (await error.json()) as TResponseBody;
+          expect(error.status).toEqual(401);
+          expect(body.message).toMatch(invalidMessageError.message);
         }
       });
 
@@ -160,18 +165,15 @@ describe("SiweStrategy", () => {
           method: "POST",
         });
 
-        let verifyResult!: SiweResponse;
-        await siweMessage
-          .verify(
-            {
-              signature: invalidSignature,
-              domain: DEFAULT_DOMAIN,
-            },
-            {
-              suppressExceptions: true,
-            }
-          )
-          .then((res) => (verifyResult = res));
+        const verifyResult: SiweResponse = await siweMessage.verify(
+          {
+            signature: invalidSignature,
+            domain: DEFAULT_DOMAIN,
+          },
+          {
+            suppressExceptions: true,
+          }
+        );
 
         const verifyError = verifyResult.error?.type;
 

@@ -88,7 +88,12 @@ export class SiweStrategy<User> extends Strategy<User, VerifierFn> {
       // the string message is parsed using the grammar defined in here:
       // https://github.com/spruceid/siwe/blob/23f7e17163ea15456b4afed3c28fb091b39feee3/packages/siwe-parser/lib/abnf.ts#L23)
       if (err instanceof Error) {
-        throw new Error(err.message);
+        return await this.failure(
+          err.message,
+          request,
+          sessionStorage,
+          options
+        );
       }
 
       throw new Error(
@@ -96,8 +101,8 @@ export class SiweStrategy<User> extends Strategy<User, VerifierFn> {
       );
     }
     let user = {} as User;
-    await siweMessage
-      .verify(
+    try {
+      const siweResponse = await siweMessage.verify(
         {
           signature,
           domain: this.options.domain,
@@ -106,42 +111,35 @@ export class SiweStrategy<User> extends Strategy<User, VerifierFn> {
           provider: this.options.provider,
           suppressExceptions: true,
         }
-      )
-      .then(async (siweResponse) => {
-        if (!siweResponse.success && !siweResponse.error) {
-          return await this.failure(
-            "siweResponse.success is false but no error was specified",
-            request,
-            sessionStorage,
-            options
-          );
-        }
+      );
 
-        if (siweResponse.error) {
-          const { error } = siweResponse;
-          return await this.failure(
-            error.type,
-            request,
-            sessionStorage,
-            options
-          );
-        }
+      if (!siweResponse.success && !siweResponse.error) {
+        throw new Error(
+          `siweResponse.success is false but no error was specified: ${JSON.stringify(
+            siweResponse
+          )}`
+        );
+      }
 
-        const { data } = siweResponse;
+      if (siweResponse.error) {
+        const { error } = siweResponse;
+        return await this.failure(error.type, request, sessionStorage, options);
+      }
 
-        user = await this.verify({ message: data });
-      })
-      .catch(async (err: unknown) => {
-        if (err instanceof Error) {
-          throw new Error(err.message);
-        }
+      const { data } = siweResponse;
 
-        if (typeof err === "string") {
-          throw new Error(err);
-        }
+      user = await this.verify({ message: data });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw new Error(err.message);
+      }
 
-        throw err;
-      });
+      if (typeof err === "string") {
+        throw new Error(err);
+      }
+
+      throw err;
+    }
 
     return this.success(user, request, sessionStorage, options);
   }
