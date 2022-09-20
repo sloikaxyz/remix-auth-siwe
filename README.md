@@ -1,37 +1,14 @@
-# Remix Auth - Strategy Template
+[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
 
-> A template for creating a new Remix Auth strategy.
+# @sloikaxyz/remix-auth-siwe
 
-If you want to create a new strategy for Remix Auth, you could use this as a template for your repository.
+A Remix Auth strategy to sign in with Ethereum
 
-The repo installs the latest version of Remix Auth and do the setup for you to have tests, linting and typechecking.
+`@sloikaxyz/remix-auth-siwe` provides a [remix-siwe](https://github.com/sergiodxa/remix-auth) authentication strategy for [Sign in with Ethereum.](https://login.xyz)
 
-## How to use it
-
-1. In the `package.json` change `name` to your strategy name, also add a description and ideally an author, repository and homepage keys.
-2. In `src/index.ts` change the `MyStrategy` for the strategy name you want to use.
-3. Implement the strategy flow inside the `authenticate` method. Use `this.success` and `this.failure` to correctly send finish the flow.
-4. In `tests/index.test.ts` change the tests to use your strategy and test it. Inside the tests you have access to `jest-fetch-mock` to mock any fetch you may need to do.
-5. Once you are ready, set the secrets on Github
-   - `NPM_TOKEN`: The token for the npm registry
-   - `GIT_USER_NAME`: The git username you want the bump workflow to use in the commit.
-   - `GIT_USER_EMAIL`: The email you want the bump workflow to use in the commit.
-
-## Scripts
-
-- `build`: Build the project for production using the TypeScript compiler (strips the types).
-- `typecheck`: Check the project for type errors, this also happens in build but it's useful to do in development.
-- `lint`: Runs ESLint against the source codebase to ensure it pass the linting rules.
-- `test`: Runs all the test using Jest.
-
-## Documentations
-
-To facilitate creating a documentation for your strategy, you can use the following Markdown
-
-```markdown
 # Strategy Name
 
-<!-- Description -->
+siwe
 
 ## Supported runtimes
 
@@ -40,9 +17,94 @@ To facilitate creating a documentation for your strategy, you can use the follow
 | Node.js    | ✅          |
 | Cloudflare | ✅          |
 
-<!-- If it doesn't support one runtime, explain here why -->
-
 ## How to use
 
-<!-- Explain how to use the strategy, here you should tell what options it expects from the developer when instantiating the strategy -->
+Set up the authenticator:
+
+```
+   // app/services/auth.server.ts
+   import { Authenticator } from "remix-auth";
+   import { SiweStrategy } from "remix-auth-siwe";
+
+   import { sessionStorage } from "~/services/session.server";
+   import type { User } from "~/services/session.server";
+
+   // Create an instance of the authenticator, pass a generic with what
+   // strategies will return and will store in the session
+   export let authenticator = new Authenticator<User>(sessionStorage, {
+      sessionKey: "sessionKey", // keep in sync
+      sessionErrorKey: "sessionErrorKey", // keep in sync
+   });
+
+   authenticator.use(
+      new SiweStrategy({ domain: "localhost:3000" }, async ({ message }) => {
+         return await Promise.resolve({ address: message.address });
+      }),
+      "siwe"
+   );
+
+```
+
+Create an action to authenticate user:
+
+```
+   export const action: ActionFunction = async ({ request, context }) => {
+      await authenticator.authenticate("siwe", request, {
+         successRedirect: "/",
+         failureRedirect: "/login",
+         context, // optional
+      });
+   };
+
+```
+
+From your login entry point send `message` and `signature` as formData:
+
+```
+   import { useSubmit } from '@remix-run/react';
+   import { SiweMessage } from 'siwe';
+
+
+   export default function Screen() {
+      const submit = useSubmit();
+
+      function authenticate = useCallback(() => {
+         // create siwe message
+         const message = await new SiweMessage({ siweMessageOptions });
+         // sign siwe message
+         const signature = await signer.signMessage(message);
+
+         const formData = new FormData();
+         formData.append('message', message);
+         formData.append('signature', signature);
+         submit(formData, {
+            action: {YOUR_LOGIN_ACTION},
+            method: 'post',
+            replace: true,
+         });
+      }, [submit])
+
+      return <button onClick={authenticate}>Sign In</button>;
+   }
+```
+
+You can check if the user is authenticated with `authenticator.isAuthenticated` and redirect to the dashboard if it is, or to login if it's not
+
+```
+export let loader: LoaderFunction = async ({ request }) => {
+  // If the user is already authenticated redirect to /dashboard
+  // otherwise redirect to /login
+  return await authenticator.isAuthenticated(request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/login",
+  });
+};
+```
+
+You can get user object from `authenticator.isAuthenticated`:
+
+```
+   let user = await authenticator.isAuthenticated(request, {
+      failureRedirect: "/login",
+   });
 ```

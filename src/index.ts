@@ -1,35 +1,60 @@
 import { SessionStorage } from "@remix-run/server-runtime";
+import { ethers } from "ethers";
 import {
   AuthenticateOptions,
   Strategy,
   StrategyVerifyCallback,
 } from "remix-auth";
+import { SiweError, SiweMessage } from "siwe";
+import { VerifyOpts } from "siwe/dist/types";
 
-/**
- * This interface declares what configuration the strategy needs from the
- * developer to correctly work.
- */
-export interface MyStrategyOptions {
-  something: "You may need";
+export interface StrategyOptions {
+  domain: string;
+  provider?: VerifyOpts["provider"];
 }
 
-/**
- * This interface declares what the developer will receive from the strategy
- * to verify the user identity in their system.
- */
-export interface MyStrategyVerifyParams {
-  something: "Dev may need";
+type VerifierFn = {
+  message: SiweMessage;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
-export class MyStrategy<User> extends Strategy<User, MyStrategyVerifyParams> {
-  name = "change-me";
+function isStrategyOptions(value: unknown): value is StrategyOptions {
+  return (
+    // options must be a non-null object
+    isRecord(value) &&
+    // the domain is required
+    typeof value.domain === "string" &&
+    // provider is optional, but must be an ethers provider if it is provided
+    (typeof value.provider === "undefined" ||
+      ethers.providers.Provider.isProvider(value.provider))
+  );
+}
+
+export class SiweStrategy<User> extends Strategy<User, VerifierFn> {
+  name = "siwe";
+
+  private options: StrategyOptions;
+  protected verify: StrategyVerifyCallback<User, VerifierFn>;
 
   constructor(
-    options: MyStrategyOptions,
-    verify: StrategyVerifyCallback<User, MyStrategyVerifyParams>
+    options: StrategyOptions,
+    verify: StrategyVerifyCallback<User, VerifierFn>
   ) {
     super(verify);
-    // do something with the options here
+
+    if (!isStrategyOptions(options)) {
+      throw new Error("invalid options object");
+    }
+
+    if (typeof verify !== "function") {
+      throw new Error("verify is not a function");
+    }
+
+    this.options = options;
+    this.verify = verify;
   }
 
   async authenticate(
@@ -37,13 +62,85 @@ export class MyStrategy<User> extends Strategy<User, MyStrategyVerifyParams> {
     sessionStorage: SessionStorage,
     options: AuthenticateOptions
   ): Promise<User> {
-    return await this.failure(
-      "Implement me!",
-      request,
-      sessionStorage,
-      options
-    );
-    // Uncomment me to do a success response
-    // this.success({} as User, request, sessionStorage, options);
+    const formData = await request.formData();
+
+    const message = formData.get("message");
+    if (typeof message !== "string") {
+      throw new Error(`request formData "message" is not a string`);
+    }
+    const signature = formData.get("signature");
+    if (typeof signature !== "string") {
+      throw new Error(`request formData "signature" is not a string`);
+    }
+
+    let siweMessage: SiweMessage;
+    try {
+      siweMessage = new SiweMessage(message);
+    } catch (err) {
+      // SiweMessage constructor throws a SiweError an object-type message is invalid
+      // https://github.com/spruceid/siwe/blob/23f7e17163ea15456b4afed3c28fb091b39feee3/packages/siwe/lib/client.ts#L352
+      if (err instanceof SiweError) {
+        return await this.failure(err.type, request, sessionStorage, options);
+      }
+
+      // SiweMessage constructor throws a generic Error if string message syntax is invalid
+      // https://github.com/spruceid/siwe/blob/23f7e17163ea15456b4afed3c28fb091b39feee3/packages/siwe-parser/lib/abnf.ts#L327
+      // the string message is parsed using the grammar defined in here:
+      // https://github.com/spruceid/siwe/blob/23f7e17163ea15456b4afed3c28fb091b39feee3/packages/siwe-parser/lib/abnf.ts#L23)
+      if (err instanceof Error) {
+        return await this.failure(
+          err.message,
+          request,
+          sessionStorage,
+          options
+        );
+      }
+
+      throw new Error(
+        `SiweMessage constructor threw an unexpected error: ${String(err)}`
+      );
+    }
+    let user = {} as User;
+    try {
+      const siweResponse = await siweMessage.verify(
+        {
+          signature,
+          domain: this.options.domain,
+        },
+        {
+          provider: this.options.provider,
+          suppressExceptions: true,
+        }
+      );
+
+      if (!siweResponse.success && !siweResponse.error) {
+        throw new Error(
+          `siweResponse.success is false but no error was specified: ${JSON.stringify(
+            siweResponse
+          )}`
+        );
+      }
+
+      if (siweResponse.error) {
+        const { error } = siweResponse;
+        return await this.failure(error.type, request, sessionStorage, options);
+      }
+
+      const { data } = siweResponse;
+
+      user = await this.verify({ message: data });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw new Error(err.message);
+      }
+
+      if (typeof err === "string") {
+        throw new Error(err);
+      }
+
+      throw err;
+    }
+
+    return this.success(user, request, sessionStorage, options);
   }
 }
