@@ -1,5 +1,5 @@
 {
-  "name": "remix-auth-siwe",
+  "name": "@sloikaxyz/remix-auth-siwe",
   "version": "1.0.0",
   "description": "Sign in with Ethereum and Passport",
   "author": "Aliya Vasilyeva <av@sloika.xyz>",
