@@ -70,6 +70,6 @@
   "dependencies": {
     "express": "^4.18.1",
     "keccak": "^3.0.2",
-    "remix-auth": "^3.0.0"
+    "remix-auth": "^3.3.0"
   }
 }
