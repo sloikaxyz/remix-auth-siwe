@@ -1812,7 +1812,7 @@
     history "^5.3.0"
     react-router-dom "6.3.0"
 
-"@remix-run/server-runtime@1.7.3":
+"@remix-run/server-runtime@1.7.3", "@remix-run/server-runtime@^1.7.3":
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/@remix-run/server-runtime/-/server-runtime-1.7.3.tgz#f2bfe247b7bd93289c665609810b71b45171444e"
   integrity sha512-U5TR2quAlc5dY5VIYYhuXJOVsJelukgFZARwZWfDCs7HQd1hhHvpe1BNwla/lH3LPYFOVeWfYRmuHurXX1nbNw==
@@ -1821,18 +1821,6 @@
     "@web3-storage/multipart-parser" "^1.0.0"
     cookie "^0.4.1"
     react-router-dom "6.3.0"
-    set-cookie-parser "^2.4.8"
-    source-map "^0.7.3"
-
-"@remix-run/server-runtime@^1.0.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@remix-run/server-runtime/-/server-runtime-1.7.0.tgz#df278c46757ebf6d7bdda144830428a0e93341a7"
-  integrity sha512-xP/422QACVA6wtnsbTXKABUqKtyMguST+vzJDjKbxVyk8/3k9La8OpF5NF4ovtLhLf0V6gus6WaR86k+HyC9Hg==
-  dependencies:
-    "@types/cookie" "^0.4.0"
-    "@web3-storage/multipart-parser" "^1.0.0"
-    cookie "^0.4.1"
-    react-router-dom "^6.2.2"
     set-cookie-parser "^2.4.8"
     source-map "^0.7.3"
 
@@ -5686,7 +5674,7 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
-react-router-dom@6.3.0, react-router-dom@^6.2.2:
+react-router-dom@6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-6.3.0.tgz#a0216da813454e521905b5fa55e0e5176123f43d"
   integrity sha512-uaJj7LKytRxZNQV8+RbzJWnJ8K2nPsOOEuX7aQstlMZKQT0164C+X2w6bnkqU3sjtLvpd5ojrezAyfZ1+0sStw==
