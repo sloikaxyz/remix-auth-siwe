@@ -1846,11 +1846,29 @@
     history "^5.3.0"
     react-router-dom "6.3.0"
 
-"@remix-run/server-runtime@1.7.5", "@remix-run/server-runtime@^1.7.5":
+"@remix-run/router@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.0.4.tgz#cbfbec6735711e7c2fc93b9b40adf70ef5a39990"
+  integrity sha512-gTL8H5USTAKOyVA4xczzDJnC3HMssdFa3tRlwBicXynx9XfiXwneHnYQogwSKpdCkjXISrEKSTtX62rLpNEVQg==
+
+"@remix-run/server-runtime@1.7.5":
   version "1.7.5"
   resolved "https://registry.yarnpkg.com/@remix-run/server-runtime/-/server-runtime-1.7.5.tgz#d7b3e594d43f354cad8efe333dcae902f9dd7b7b"
   integrity sha512-wy/1UDUjN1AoZBAee12rV1gbq+N6RfHetarHLoEIHWrKx3oLb0Ik+MQmjD6PbyO41JdOVQ2tn+euJHJY7sz48g==
   dependencies:
+    "@types/cookie" "^0.4.0"
+    "@web3-storage/multipart-parser" "^1.0.0"
+    cookie "^0.4.1"
+    react-router-dom "6.3.0"
+    set-cookie-parser "^2.4.8"
+    source-map "^0.7.3"
+
+"@remix-run/server-runtime@^1.8.1":
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/@remix-run/server-runtime/-/server-runtime-1.8.1.tgz#2cdfdcbac01fbfb21ef5fc5cd8cc350d44eeec49"
+  integrity sha512-GcOhrQOB5E1vSPUA1OLzPRRyHErdA6QsKpz4LAw2rayvpBd47bhU18bFBJEPr1vwmimgeU/9QnopUHz5/eOZ5w==
+  dependencies:
+    "@remix-run/router" "1.0.4"
     "@types/cookie" "^0.4.0"
     "@web3-storage/multipart-parser" "^1.0.0"
     cookie "^0.4.1"
